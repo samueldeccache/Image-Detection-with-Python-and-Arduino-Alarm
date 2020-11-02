@@ -1,0 +1,48 @@
+from glob import glob
+import cv2
+import matplotlib.pyplot as plt
+import os
+import serial 
+import numpy as np
+vet =[]
+porta = 'COM4'
+velocidade = 9600
+conexao = serial.Serial(porta,velocidade)
+#Endereco das imagens
+img_names = glob(os.path.join(os.getcwd(),'*.png'))
+for fn in img_names:
+#Ler todas as imagens na pasta e plotar
+    img = cv2.imread(fn)
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    blur = cv2.medianBlur(hsv ,11)
+    lower = np.array([0,0,0])
+    upper = np.array([5,5,5])
+    mask = cv2.inRange(blur, lower, upper)
+    res = cv2.bitwise_and(img,img, mask= mask) 
+    white_lower=np.array([254,254,254],np.uint8)
+    white_upper=np.array([255,255,255],np.uint8)
+    p = np.linspace(0,1,99).reshape(33,3)
+    #black = np.array(m)
+    white=cv2.inRange(hsv,white_lower,white_upper)
+    plt.imshow(img)
+    plt.show() 
+    #cv2.imshow('ham', white)
+    cont =0 
+    for i in range(len(p)):
+        if p[i] in img:
+            #print ('detectada')
+            cont+=1
+    if cont>1:
+        print('detectada', fn)
+        conexao.write(b'H')
+        vet.append('detectada')
+    else:
+        print('nao detectada')
+        conexao.write(b'L')
+    for i in range(len(vet)):
+        if vet[i]=='detectada':
+             conexao.write(b'H')
+        else:
+            conexa.write(b'L')
+            
+conexao.close()
